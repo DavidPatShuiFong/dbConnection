@@ -1,0 +1,18 @@
+This package references (through loading,
+not attaching) two other packages:
+
+1. DBI (Imports) 
+2. pool (Suggests)
+
+Neither of 'DBI' or 'pool' packages are distributed
+with this package.
+
+GNU Lesser General Public License v3 (LGPL v3)
+==============================================
+DBI
+https://cran.r-project.org/web/packages/DBI/
+
+GNU General Public License v3 (GPL v3)
+======================================
+pool
+https://cran.r-project.org/web/packages/pool/
