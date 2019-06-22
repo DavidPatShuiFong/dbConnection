@@ -1,6 +1,6 @@
 # dbConnection
 
-install with `devtools::install_github('DavidPatShuiFong/dbConnect')`
+install with `devtools::install_github('DavidPatShuiFong/dbConnection')`
 
 R6 'object-oriented' objects for generic connection to databases. 
 
