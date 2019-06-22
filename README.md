@@ -1,4 +1,4 @@
-dbConnection
+# dbConnection
 
 install with `devtools::install_github('DavidPatShuiFong/dbConnect')`
 
