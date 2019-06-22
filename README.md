@@ -10,25 +10,26 @@ Exports (makes available) a single R6 class definition, 'dbConnection'.
 
 dbConnection class
 
-**Fields**
+## Fields
 
-DBIconn : connection using DBI (NULL if not connected)
+**DBIconn** : connection using DBI (NULL if not connected)
 
-poolconn : connection using pool (NULL is not connected)
+**poolconn** : connection using pool (NULL is not connected)
 
-conn() : connection using whichever connection is available
-
-
-**Methods**
-
-connect : connect to database
-close : close connection to database
-dbSendQuery : send query (statement) to connection
+**conn()** : connection using whichever connection is available
 
 
-**Examples**
+## Methods
 
-`dbConnection$new()   # creates new object
+**connect** : connect to database
+**close** : close connection to database
+**dbSendQuery** : send query (statement) to connection
+
+
+## Examples
+
+```
+dbConnection$new()   # creates new object
 
 dbConnection$connect(usepool = TRUE, RSQLite::SQLite(),
                      dbname = "mydatabase.sqlite")
@@ -42,3 +43,4 @@ data_for_sql <- list(c("John"), id)
 dbConnectioin$dbSendQuery(query, data_for_sql)
                      # send parametized 'SQL query'
                      # with 'data_for_sql'`
+```
