@@ -25,7 +25,7 @@
 #'
 #' query <- "UPDATE Users SET Name = ? WHERE id = ?"
 #' data_for_sql <- list(c("John"), id)
-#' dbConnectioin$dbSendQuery(query, data_for_sql)
+#' dbConnection$dbSendQuery(query, data_for_sql)
 #'                      # send parametized 'SQL query'
 #'                      # with 'data_for_sql'
 #'
