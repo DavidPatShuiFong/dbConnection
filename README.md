@@ -22,7 +22,9 @@ dbConnection class
 ## Methods
 
 **connect** : connect to database
+
 **close** : close connection to database
+
 **dbSendQuery** : send query (statement) to connection
 
 
