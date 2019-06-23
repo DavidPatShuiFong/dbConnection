@@ -16,10 +16,15 @@
 #' @examples
 #' dbConnection$new()   # creates new object
 #'
-#' dbConnection$connect(usepool = TRUE, RSQLite::SQLite(),
-#'                      dbname = "mydatabase.sqlite")
+#' dbConnection$connect(drv = RSQLite::SQLite(),
+#'                      dbname = "mydatabase.sqlite",
+#'                      usepool = FALSE)
 #'                      # sets $DBIconn or $poolcon to connection
 #'                      # both set to NULL if fail/warn
+#'                      # by default 'usepool' is TRUE and attempts
+#'                      # to use 'pool' package (if available)
+#'                      # if 'usepool' is FALSE, then do not use
+#'                      # the 'pool' package, so use 'DBI' instead
 #'
 #' dbConnection$close() # closes all connections
 #'
@@ -35,12 +40,11 @@ dbConnection <-
               public = list(
                 DBIconn = NULL, # connection using DBI
                 poolconn = NULL, # connection using pool
-                connect = function (usepool = TRUE, drv, # by default, try to open using pool
-                                    ...
-                ) {
+                connect = function (drv, ..., usepool = TRUE) {
                   # connect to database, using 'pool' package if available and desired
-                  # accepts standard database opening parameters
+                  # accepts standard database opening parameters (drv, ...)
                   # and 'usepool', whether to try to open the pool
+                  # by default, try to open using pool (TRUE)
                   #
                   if (usepool & requireNamespace("pool", quietly = TRUE)) {
                     # if use of pool is requested, and 'pool' package is available

@@ -36,16 +36,21 @@ dbConnection class
 \examples{
 dbConnection$new()   # creates new object
 
-dbConnection$connect(usepool = TRUE, RSQLite::SQLite(),
-                     dbname = "mydatabase.sqlite")
+dbConnection$connect(drv = RSQLite::SQLite(),
+                     dbname = "mydatabase.sqlite",
+                     usepool = FALSE)
                      # sets $DBIconn or $poolcon to connection
                      # both set to NULL if fail/warn
+                     # by default 'usepool' is TRUE and attempts
+                     # to use 'pool' package (if available)
+                     # if 'usepool' is FALSE, then do not use
+                     # the 'pool' package, so use 'DBI' instead
 
 dbConnection$close() # closes all connections
 
 query <- "UPDATE Users SET Name = ? WHERE id = ?"
 data_for_sql <- list(c("John"), id)
-dbConnectioin$dbSendQuery(query, data_for_sql)
+dbConnection$dbSendQuery(query, data_for_sql)
                      # send parametized 'SQL query'
                      # with 'data_for_sql'
 
