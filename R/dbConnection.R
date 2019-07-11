@@ -92,7 +92,7 @@ dbConnection <-
                 },
                 dbSendQuery = function(query, data_for_sql) {
                   # send SQL statement to active connection,
-                  # eith DBI or pool
+                  # either DBI or pool
                   # @param query - the SQL query
                   # @data_for_sql - the data
                   if (!is.null(self$DBIconn)) {
