@@ -11,6 +11,7 @@
 #' \item{\strong{connect} connect to database}
 #' \item{\strong{close} close connection to database}
 #' \item{\strong{dbSendQuery} send query (statement) to connection}
+#' \item{\strong{dbGetQuery} send query to connection}
 #' }
 #'
 #' @examples
