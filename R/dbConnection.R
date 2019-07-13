@@ -115,5 +115,19 @@ dbConnection <-
                     pool::poolReturn(temp_connection)
                   }
                   invisible(self)
+                },
+                dbGetQuery = function(query) {
+                  # send SQL query statement to active connection,
+                  # either DBI or pool
+                  # dbGetQuery is a combination of
+                  #  dbSendQuery, dbFetch and dbClearResult
+                  # @param query - the SQL query
+                  if (!is.null(self$DBIconn)) {
+                    rs <- DBI::dbGetQuery(self$DBIconn, query)
+                  }
+                  if (!is.null(self$poolconn)) {
+                    rs <- DBI::dbGetQuery(self$poolconn, query)
+                  }
+                  return(rs)
                 }
               ))
