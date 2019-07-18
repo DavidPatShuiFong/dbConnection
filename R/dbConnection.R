@@ -71,6 +71,11 @@ dbConnection <-
                   }
                   invisible(self)
                 },
+                is_open = function() {
+                  # is any connection open?
+                  # returns TRUE or FALSE
+                  return(!is.null(self$DBIconn) | !is.null(self$poolconn))
+                },
                 finalize = function() {
                   # object being destroyed/removed
                   # close all open connections
