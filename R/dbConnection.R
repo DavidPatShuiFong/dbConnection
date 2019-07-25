@@ -97,30 +97,42 @@ dbConnection <-
                   }
                 },
                 dbSendQuery = function(query, data_for_sql) {
-                  # send SQL statement to active connection,
+                  # send SQL statement/query to active connection,
                   # either DBI or pool
                   # @param query - the SQL query
                   # @data_for_sql - the data
+                  # returns result 'rs'
+
+                  rs <- NULL # by default, there is no result
+
                   if (!is.null(self$DBIconn)) {
-                    rs <- DBI::dbSendQuery(self$DBIconn, query)
+                    q <- DBI::dbSendQuery(self$DBIconn, query)
                     # parameterized query can handle apostrophes etc.
-                    DBI::dbBind(rs, data_for_sql)
-                    # for statements, rather than queries, we don't need to dbFetch(rs)
+                    DBI::dbBind(q, data_for_sql)
+                    tryCatch(rs <- DBI::dbFetch(q),
+                             warning = function(w) {})
+                    # for statements, rather than queries, we don't need to dbFetch(q)
                     # update database
-                    DBI::dbClearResult(rs)
+                    # the tryCatch suppresses the warning:
+                    # Warning message:
+                    #  In result_fetch(res@ptr, n = n) :
+                    #   Don't need to call dbFetch() for statements, only for queries
+                    DBI::dbClearResult(q)
                   }
                   if (!is.null(self$poolconn)) {
                     temp_connection <- pool::poolCheckout(self$poolconn)
                     # can't write with the pool
-                    rs <- DBI::dbSendQuery(temp_connection, query)
+                    q <- DBI::dbSendQuery(temp_connection, query)
                     # parameterized query can handle apostrophes etc.
-                    DBI::dbBind(rs, data_for_sql)
-                    # for statements, rather than queries, we don't need to dbFetch(rs)
+                    DBI::dbBind(q, data_for_sql)
+                    tryCatch(rs <- DBI::dbFetch(q),
+                             warning = function(w) {})
+                    # for statements, rather than queries, we don't need to dbFetch(q)
                     # update database
-                    DBI::dbClearResult(rs)
+                    DBI::dbClearResult(q)
                     pool::poolReturn(temp_connection)
                   }
-                  invisible(self)
+                  return(rs)
                 },
                 dbGetQuery = function(query) {
                   # send SQL query statement to active connection,
