@@ -129,6 +129,9 @@ dbConnection <-
                              warning = function(w) {})
                     # for statements, rather than queries, we don't need to dbFetch(q)
                     # update database
+                    # the tryCatch suppresses the warning:
+                    # Warning message:
+                    #  In result_fetch(res@ptr, n = n) :
                     DBI::dbClearResult(q)
                     pool::poolReturn(temp_connection)
                   }
