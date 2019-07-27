@@ -9,9 +9,11 @@
 dbConnection
 }
 \description{
-dbConnection class
+connect to database using either DBI or pool
 }
 \details{
+dbConnection class
+
 connect using DBI or pool
 }
 \section{Fields}{

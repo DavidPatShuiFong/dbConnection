@@ -1,11 +1,11 @@
-#' @import pipeR
-NULL
-
 #' dbConnection class
 #'
 #' connect using DBI or pool
 #'
 #' @title dbConnection class
+#'
+#' @description connect to database using either DBI or pool
+#'
 #' @field DBIconn - connection using DBI (NULL if not connected)
 #' @field poolconn - connection using pool (NULL is not connected)
 #' @field conn() - connection using whichever connection is available
@@ -17,6 +17,8 @@ NULL
 #' \item{\strong{dbSendQuery}}{send query (statement) to connection}
 #' \item{\strong{dbGetQuery}}{send query to connection}
 #' }
+#'
+#' @import pipeR
 #'
 #' @examples
 #' dbConnection$new()   # creates new object
@@ -56,10 +58,18 @@ dbConnection <-
                     tryCatch(self$poolconn <- pool::dbPool(drv, ...),
                              error = function(e) {NULL},
                              warning = function(w) {NULL})
+                    # warning might result if not a valid database
+                    tryCatch(DBI::dbListTables(self$poolconn),
+                             error = function(e) {self$poolconn <- NULL})
+                    # testing for tables will result in an error if not a valid database
                   } else {
                     tryCatch(self$DBIconn <- DBI::dbConnect(drv, ...),
                              error = function(e) {NULL},
                              warning = function(w) {NULL})
+                    # warning might result if not a valid database
+                    tryCatch(DBI::dbListTables(self$DBIconn),
+                             error = function(e) {self$DBIconn <- NULL})
+                    # testing for tables will result in an error if not a valid database
                   }
                   invisible(self)
                 },
@@ -224,6 +234,7 @@ dbConnection <-
                     # open config database file
                     self$log_db$connect(RSQLite::SQLite(),
                                         dbname = filename)
+                    # potentially returns NULL if file is not a database
                   } else {
                     # if the config database doesn't exist,
                     # then create it (note create = TRUE option)
@@ -231,6 +242,7 @@ dbConnection <-
                                         dbname = filename)
                     # create = TRUE not a valid option?
                     # always tries to create file if it doesn't exist
+                    # could potentially return NULL if invalid filename
                   }
                   initialize_data_table = function(db, tablename, variable_list ) {
                     # make sure the table in the database has all the right variable headings
@@ -287,7 +299,10 @@ dbConnection <-
                                                c("Query", "character"),
                                                c("Data", "character"),
                                                c("Duration", "character")))
-                    # initialize_data_table will create table and/or ADD 'missing' columns to existing table
+                    # initialize_data_table will create table and/or
+                    # ADD 'missing' columns to existing table
+
+                    set.seed(Sys.time()) # set 'random' seed to random number generate
                   }
 
                 },
