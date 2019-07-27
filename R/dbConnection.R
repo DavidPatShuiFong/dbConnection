@@ -105,6 +105,19 @@ dbConnection <-
 
                   rs <- NULL # by default, there is no result
 
+                  if (self$keep_log) {
+                    start_time <- Sys.time()
+                    random_id <- stringi::stri_rand_strings(1, 15) # random string
+
+                    self$log_dbConn$dbSendQuery(
+                      "INSERT INTO logs (Time, ID, Tag, Query, Data) VALUES (?, ?, ?, ?, ?)",
+                      as.list.data.frame(c(as.character(start_time), random_id,
+                                           self$tag,
+                                           query,
+                                           paste(sQuote(data_for_sql), collapse = ", ")))
+                      )
+                  }
+
                   if (!is.null(self$DBIconn)) {
                     q <- DBI::dbSendQuery(self$DBIconn, query)
                     # parameterized query can handle apostrophes etc.
@@ -135,11 +148,21 @@ dbConnection <-
                     DBI::dbClearResult(q)
                     pool::poolReturn(temp_connection)
                   }
+
+                  if (self$keep_log) {
+
+                    self$log_dbConn$dbSendQuery(
+                      "UPDATE logs SET Duration = ? WHERE Time = ? AND ID = ? AND Tag = ?",
+                      as.list.data.frame(c(Sys.time()-start_time,
+                                           start_time, random_id, self$tag))
+                      )
+                  }
+
                   return(rs)
                 },
                 dbGetQuery = function(query) {
                   # send SQL query statement to active connection,
-                  # either DBI or pool
+                  # either DBI or pool.
                   # dbGetQuery is a combination of
                   #  dbSendQuery, dbFetch and dbClearResult
                   # @param query - the SQL query
@@ -150,5 +173,26 @@ dbConnection <-
                     rs <- DBI::dbGetQuery(self$poolconn, query)
                   }
                   return(rs)
+                },
+                keep_log = FALSE, # by default, don't keep logs
+                log_dbConnection = NULL, # another dbConnection object!
+                  # requirements - has TABLE logs
+                  #   which has fields Time, ID, Tag, Query, Data and Duration
+                log_tag = "", # later, will be a tag for this connection's logs
+                start_logging = function(tag, dbConn) {
+                  # @param tag - string tag to attach to this connection's logs
+                  # @param dbConn - another dbConnection R6 object! the database
+                  #   where the log is kept
+                  #   see the requirements of dbConn in log_dbConnection
+                  # @return nothing
+
+                  self$keep_log <- TRUE
+                  self$log_dbConnection <- dbConn
+                  self$log_tag <- tag
+                },
+                stop_logging = function() {
+                  # does not assume responsibility for closing the connection
+                  # to self$log_dbConnection
+                  self$keep_log <- FALSE
                 }
               ))
