@@ -10,7 +10,9 @@ Encoding: UTF-8
 ByteCompile: true
 Imports: 
  DBI,
- stringi
+ stringi,
+ RSQLite,
+ pipeR
 Suggests: 
  pool
 LazyData: true

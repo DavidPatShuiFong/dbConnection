@@ -1,11 +1,30 @@
 This package references (through loading,
 not attaching) two other packages:
 
-1. DBI (Imports) 
-2. pool (Suggests)
+1. DBI (Imports)
+2. RSQLite (Imports)
+3. stringi (Imports)
+4. pipeR (Imports)
+5. pool (Suggests)
 
 Neither of 'DBI' or 'pool' packages are distributed
 with this package.
+
+
+MIT
+===
+pipeR
+https://github.com/renkun-ken/pipeR
+
+BSD-3
+=====
+stringi
+https://github.com/gagolews/stringi
+
+GNU Lesser General Public License v2+ (LGPL v2+)
+================================================
+RSQLite
+https://github.com/r-dbi/RSQLite
 
 GNU Lesser General Public License v3 (LGPL v3)
 ==============================================

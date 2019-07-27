@@ -1,17 +1,21 @@
+#' @import pipeR
+NULL
+
 #' dbConnection class
+#'
+#' connect using DBI or pool
+#'
 #' @title dbConnection class
-#' @doctype class
-#' @description connect using DBI or pool
 #' @field DBIconn - connection using DBI (NULL if not connected)
 #' @field poolconn - connection using pool (NULL is not connected)
 #' @field conn() - connection using whichever connection is available
 #'
 #' @section Methods:
 #' \describe{
-#' \item{\strong{connect} connect to database}
-#' \item{\strong{close} close connection to database}
-#' \item{\strong{dbSendQuery} send query (statement) to connection}
-#' \item{\strong{dbGetQuery} send query to connection}
+#' \item{\strong{connect}}{connect to database}
+#' \item{\strong{close}}{close connection to database}
+#' \item{\strong{dbSendQuery}}{send query (statement) to connection}
+#' \item{\strong{dbGetQuery}}{send query to connection}
 #' }
 #'
 #' @examples
@@ -109,13 +113,13 @@ dbConnection <-
                     start_time <- Sys.time()
                     random_id <- stringi::stri_rand_strings(1, 15) # random string
 
-                    self$log_dbConn$dbSendQuery(
+                    self$log_db$dbSendQuery(
                       "INSERT INTO logs (Time, ID, Tag, Query, Data) VALUES (?, ?, ?, ?, ?)",
                       as.list.data.frame(c(as.character(start_time), random_id,
-                                           self$tag,
+                                           self$log_tag,
                                            query,
                                            paste(sQuote(data_for_sql), collapse = ", ")))
-                      )
+                    )
                   }
 
                   if (!is.null(self$DBIconn)) {
@@ -150,12 +154,11 @@ dbConnection <-
                   }
 
                   if (self$keep_log) {
-
-                    self$log_dbConn$dbSendQuery(
+                    self$log_db$dbSendQuery(
                       "UPDATE logs SET Duration = ? WHERE Time = ? AND ID = ? AND Tag = ?",
-                      as.list.data.frame(c(Sys.time()-start_time,
-                                           start_time, random_id, self$tag))
-                      )
+                      as.list.data.frame(c(as.character(Sys.time()-start_time),
+                                           as.character(start_time), random_id, self$log_tag))
+                    )
                   }
 
                   return(rs)
@@ -166,33 +169,132 @@ dbConnection <-
                   # dbGetQuery is a combination of
                   #  dbSendQuery, dbFetch and dbClearResult
                   # @param query - the SQL query
+
+                  if (self$keep_log) {
+                    start_time <- Sys.time()
+                    random_id <- stringi::stri_rand_strings(1, 15) # random string
+
+                    self$log_db$dbSendQuery(
+                      "INSERT INTO logs (Time, ID, Tag, Query) VALUES (?, ?, ?, ?)",
+                      as.list.data.frame(c(as.character(start_time), random_id,
+                                           self$log_tag,
+                                           query))
+                    )
+                  }
+
                   if (!is.null(self$DBIconn)) {
                     rs <- DBI::dbGetQuery(self$DBIconn, query)
                   }
                   if (!is.null(self$poolconn)) {
                     rs <- DBI::dbGetQuery(self$poolconn, query)
                   }
+
+                  if (self$keep_log) {
+
+                    self$log_db$dbSendQuery(
+                      "UPDATE logs SET Duration = ? WHERE Time = ? AND ID = ? AND Tag = ?",
+                      as.list.data.frame(c(as.character(Sys.time()-start_time),
+                                           as.character(start_time), random_id, self$log_tag))
+                    )
+                  }
+
                   return(rs)
                 },
                 keep_log = FALSE, # by default, don't keep logs
-                log_dbConnection = NULL, # another dbConnection object!
-                  # requirements - has TABLE logs
-                  #   which has fields Time, ID, Tag, Query, Data and Duration
+                log_db = NULL, # another dbConnection object!
+                # requirements - has TABLE logs
+                #   which has fields Time, ID, Tag, Query, Data and Duration
                 log_tag = "", # later, will be a tag for this connection's logs
-                start_logging = function(tag, dbConn) {
+                open_log_db = function(filename, tag) {
+                  # create or open a new log database file (a SQLite file)
+                  # and start logging
+                  # @param filename - filename of SQLite database
+                  #  will create SQLite database if filename doesn't exist
                   # @param tag - string tag to attach to this connection's logs
-                  # @param dbConn - another dbConnection R6 object! the database
-                  #   where the log is kept
-                  #   see the requirements of dbConn in log_dbConnection
+                  #
                   # @return nothing
-
                   self$keep_log <- TRUE
-                  self$log_dbConnection <- dbConn
                   self$log_tag <- tag
+
+                  self$log_db <- dbConnection::dbConnection$new()
+                  # self-referential!
+
+
+                  if (file.exists(filename)) {
+                    # open config database file
+                    self$log_db$connect(RSQLite::SQLite(),
+                                        dbname = filename)
+                  } else {
+                    # if the config database doesn't exist,
+                    # then create it (note create = TRUE option)
+                    self$log_db$connect(RSQLite::SQLite(),
+                                        dbname = filename)
+                    # create = TRUE not a valid option?
+                    # always tries to create file if it doesn't exist
+                  }
+                  initialize_data_table = function(db, tablename, variable_list ) {
+                    # make sure the table in the database has all the right variable headings
+                    # allows 'update' of old databases
+                    #
+                    # input - db : R6 object of configuration database
+                    # input - tablename : name of table
+                    # input - variable_list : list of variable headings, with variable type
+                    #   e.g. list(c("id", "integer"), c("Name", "character"))
+                    #
+                    # alters table in database directly
+                    #
+                    # returns - nothing
+
+                    tablenames <- db$conn() %>>% DBI::dbListTables()
+
+                    if (tablename %in% tablenames) {
+                      # if table exists in db database
+                      columns <- db$conn() %>>% dplyr::tbl(tablename) %>>% colnames()
+                      # list of column (variable) names
+                      data <- db$conn() %>>% dplyr::tbl(tablename) %>>% dplyr::collect()
+                      # get a copy of the table's data
+                    } else {
+                      # table does not exist, needs to be created
+                      columns <- NULL
+                      data <- data.frame(NULL)
+                    }
+
+                    changed <- FALSE
+                    # haven't changed anything yet
+
+                    for (a in variable_list) {
+                      if (!(a[[1]] %in% columns)) {
+                        # if a required variable name is not in the table
+                        data <- data %>>%
+                          dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
+                        # use of !! and := to dynamically specify a[[1]] as a column name
+                        # potentially could use data[,a[[1]]] <- ...
+                        changed <- TRUE
+                      }
+                    }
+                    if (changed == TRUE) {
+                      DBI::dbWriteTable(db$conn(), tablename, data, overwrite = TRUE)
+                    }
+                  }
+
+                  if (!is.null(self$log_db$conn())) {
+                    # check that tables exist in the config file
+                    # also create new columns (variables) as necessary
+                    initialize_data_table(self$log_db, "logs",
+                                          list(c("Time", "character"),
+                                               c("ID", "character"),
+                                               c("Tag", "character"),
+                                               c("Query", "character"),
+                                               c("Data", "character"),
+                                               c("Duration", "character")))
+                    # initialize_data_table will create table and/or ADD 'missing' columns to existing table
+                  }
+
                 },
-                stop_logging = function() {
-                  # does not assume responsibility for closing the connection
-                  # to self$log_dbConnection
+                close_log_db = function() {
+                  # turns off logging
+                  # and closes the open log database connection
                   self$keep_log <- FALSE
+                  self$log_db$close()
                 }
               ))
