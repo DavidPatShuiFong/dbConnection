@@ -291,6 +291,19 @@ dbConnection <-
                   }
 
                 },
+                write_log_db = function(data) {
+                  # write arbitrary data/message to log file
+                  if (self$log_db$is_open()) {
+                    start_time <- Sys.time()
+                    random_id <- stringi::stri_rand_strings(1, 15) # random string
+                    self$log_db$dbSendQuery(
+                      "INSERT INTO logs (Time, ID, Tag, Data) VALUES (?, ?, ?, ?)",
+                      as.list.data.frame(c(as.character(start_time), random_id,
+                                           self$log_tag,
+                                           paste(sQuote(data), collapse = ", ")))
+                    )
+                  }
+                },
                 close_log_db = function() {
                   # turns off logging
                   # and closes the open log database connection
