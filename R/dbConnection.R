@@ -306,7 +306,7 @@ dbConnection <-
                   }
 
                 },
-                write_log_db = function(data) {
+                write_log_db = function(query = "", data = "") {
                   # write arbitrary data/message to log file
                   # returns some defining characteristics of this log entry
                   # which can be used in method $duration_log_db
@@ -316,9 +316,10 @@ dbConnection <-
                     start_time_char <- as.character(start_time)
                     random_id <- stringi::stri_rand_strings(1, 15) # random string
                     self$log_db$dbSendQuery(
-                      "INSERT INTO logs (Time, ID, Tag, Data) VALUES (?, ?, ?, ?)",
+                      "INSERT INTO logs (Time, ID, Tag, Query, Data) VALUES (?, ?, ?, ?, ?)",
                       as.list.data.frame(c(start_time_char, random_id,
                                            self$log_tag,
+                                           query,
                                            paste(sQuote(data), collapse = ", ")))
                     )
                     return(list(id = random_id,
