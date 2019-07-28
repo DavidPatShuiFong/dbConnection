@@ -308,15 +308,41 @@ dbConnection <-
                 },
                 write_log_db = function(data) {
                   # write arbitrary data/message to log file
+                  # returns some defining characteristics of this log entry
+                  # which can be used in method $duration_log_db
                   if (self$log_db$is_open()) {
+                    # test if the log database is actually open!
                     start_time <- Sys.time()
+                    start_time_char <- as.character(start_time)
                     random_id <- stringi::stri_rand_strings(1, 15) # random string
                     self$log_db$dbSendQuery(
                       "INSERT INTO logs (Time, ID, Tag, Data) VALUES (?, ?, ?, ?)",
-                      as.list.data.frame(c(as.character(start_time), random_id,
+                      as.list.data.frame(c(start_time_char, random_id,
                                            self$log_tag,
                                            paste(sQuote(data), collapse = ", ")))
                     )
+                    return(list(id = random_id,
+                                start_time = start_time,
+                                start_time_char = start_time_char))
+                  }
+                },
+                duration_log_db = function(log_detail) {
+                  # add duration information to log written by write_log_db
+                  # uses return values from write_log_db
+                  # returns the written string
+                  if (self$log_db$is_open()) {
+                    # test if the log database is actually open!
+                    duration <- as.character(Sys.time() - log_detail$start_time)
+
+                    self$log_db$dbSendQuery(
+                      "UPDATE logs SET Duration = ? WHERE Time = ? AND ID = ? AND Tag = ?",
+                      as.list.data.frame(c(duration,
+                                           log_detail$start_time_char,
+                                           log_detail$id,
+                                           self$log_tag))
+                    )
+
+                    return(duration)
                   }
                 },
                 close_log_db = function() {
