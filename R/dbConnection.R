@@ -173,6 +173,79 @@ dbConnection <-
 
                   return(rs)
                 },
+                dbSendGlueQuery = function(query, ...) {
+                  # send SQL statement/query to active connection,
+                  # either DBI or pool
+                  # uses 'glue::glue_sql, which allows multiple values,
+                  # to be collapsed with commas
+                  # https://db.rstudio.com/best-practices/run-queries-safely/
+                  #
+                  # If you place an astersk * at the end of a glue expression the values will be
+                  # collapsed with commas. This is useful for the SQL IN Operator for instance.
+                  #
+                  # rs <- dbSendGlueQuery("SELECT * FROM airports WHERE faa in ({airports*})",
+                  #                       airports = c("GPT", "MSY"))
+                  #
+                  # @param query - the SQL query
+                  # @data - the data
+                  # returns result 'rs'
+
+                  rs <- NULL # by default, there is no result
+
+                  if (self$keep_log) {
+                    start_time <- Sys.time()
+                    random_id <- stringi::stri_rand_strings(1, 15) # random string
+
+                    self$log_db$dbSendQuery(
+                      "INSERT INTO logs (Time, ID, Tag, Query, Data) VALUES (?, ?, ?, ?, ?)",
+                      as.list.data.frame(c(as.character(start_time), random_id,
+                                           self$log_tag,
+                                           query,
+                                           paste(sQuote(c(names(list(...)), list(...))),
+                                                 collapse = ", ")))
+                    )
+                  }
+
+                  if (!is.null(self$DBIconn)) {
+                    sql <- glue::glue_data_sql(.x = list(...), query,
+                                               .con = self$DBIconn)
+                    # quite complex, and not really very well documented!
+                    # https://glue.tidyverse.org/reference/glue_sql.html
+                    # the '...' needs to be converted to a list,
+                    # and then passed onto the glue_data_sql
+
+                    q <- DBI::dbSendQuery(self$DBIconn, sql)
+                    tryCatch(rs <- DBI::dbFetch(q),
+                             warning = function(w) {})
+                    DBI::dbClearResult(q)
+                  }
+                  if (!is.null(self$poolconn)) {
+                    temp_connection <- pool::poolCheckout(self$poolconn)
+                    # can't write with the pool
+                    sql <- glue::glue_data_sql(.x = list(...), query,
+                                               .con =temp_connection)
+                    # quite complex, and not really very well documented!
+                    # https://glue.tidyverse.org/reference/glue_sql.html
+                    # the '...' needs to be converted to a list,
+                    # and then passed onto the glue_data_sql
+
+                    q <- DBI::dbSendQuery(temp_connection, sql)
+                    tryCatch(rs <- DBI::dbFetch(q),
+                             warning = function(w) {})
+                    DBI::dbClearResult(q)
+                    pool::poolReturn(temp_connection)
+                  }
+
+                  if (self$keep_log) {
+                    self$log_db$dbSendQuery(
+                      "UPDATE logs SET Duration = ? WHERE Time = ? AND ID = ? AND Tag = ?",
+                      as.list.data.frame(c(as.character(Sys.time()-start_time),
+                                           as.character(start_time), random_id, self$log_tag))
+                    )
+                  }
+
+                  return(rs)
+                },
                 dbGetQuery = function(query) {
                   # send SQL query statement to active connection,
                   # either DBI or pool.

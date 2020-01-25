@@ -5,7 +5,8 @@ not attaching) two other packages:
 2. RSQLite (Imports)
 3. stringi (Imports)
 4. pipeR (Imports)
-5. pool (Suggests)
+5. glue (Imports)
+6. pool (Suggests)
 
 Neither of 'DBI' or 'pool' packages are distributed
 with this package.
@@ -15,6 +16,9 @@ MIT
 ===
 pipeR
 https://github.com/renkun-ken/pipeR
+
+glue
+https://github.com/tidyverse/glue
 
 BSD-3
 =====

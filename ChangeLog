@@ -1,0 +1,7 @@
+Changelog
+=========
+
+0.3.0 - 25th January 2020
+=========================
+
+* add dbSendGlueQuery - allows multiple value arguments
