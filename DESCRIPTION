@@ -17,4 +17,4 @@ Imports:
 Suggests: 
  pool
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0.9000
