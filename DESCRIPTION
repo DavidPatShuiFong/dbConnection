@@ -5,7 +5,7 @@ Version: 0.3.0
 Author: David P.S. Fong
 Maintainer: David P.S. Fong <vkelim@bigpond.com>
 Description: R6 'object-oriented' objects for generic connection to databases. Preferentially uses 'pool' package, but does not depend on 'pool'.  Falls back to 'DBI' connections either if 'pool' is not available, or specifically if 'usepool == FALSE'. Exports (makes available) a single R6 object definition, 'dbConnection'.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 ByteCompile: true
 Imports: 
